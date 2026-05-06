@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   // 1. Point explicitly to the e2e folder
   testDir: './test/e2e',
-  
+
   // 2. Ignore any files that are not E2E specs (just in case)
   testMatch: '**/*.spec.ts',
 
@@ -41,7 +41,7 @@ export default defineConfig({
     {
       command: 'pnpm --filter web dev',
       url: 'http://localhost:3000',
-      reuseExistingServer: false, // Force restart to pick up changes
+      reuseExistingServer: true, // Allow running against existing dev server
       stdout: 'pipe',
       stderr: 'pipe',
     },

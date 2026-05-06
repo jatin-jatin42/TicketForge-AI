@@ -6,6 +6,7 @@ import { createHandler } from 'graphql-http/lib/use/express';
 import { buildSchema } from 'graphql';
 import jwt from 'jsonwebtoken';
 import authRoutes from './auth/auth.routes';
+import bookingRoutes from './bookings/bookings.routes';
 import uploadRoutes from './upload/upload.routes';
 import { env } from './config/env';
 import { logger } from './lib/logger';
@@ -76,6 +77,13 @@ app.use(cors());
 // If graphql-http has issues, we can revisit, but usually standard JSON parsing is fine or even required for some setups.
 app.use(express.json());
 
+// --- Swagger Documentation ---
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './docs/swagger/swagger.config';
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
 app.use(apiRateLimiter);
 
 // 2. Logging
@@ -88,6 +96,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/bookings", bookingRoutes);
 app.use("/api/upload", uploadRoutes);
 
 
