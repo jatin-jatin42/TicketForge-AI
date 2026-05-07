@@ -3,10 +3,7 @@
 export const userTypeDefs = `
   # Extend existing User type with new fields
   extend type User {
-    id: ID!
     name: String!
-    email: String!
-    role: String!
     createdAt: String!
   }
 
