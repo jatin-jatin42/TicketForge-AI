@@ -87,8 +87,15 @@ export const userResolvers = {
     },
 
     deleteUser: async (args: any, context: any) => {
-      requireAdmin(context);
+      const currentAdminId = requireAdmin(context);
       const { userId } = args;
+
+      if (currentAdminId === userId) {
+        throw new GraphQLError('Forbidden: You cannot delete your own admin account.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
       return await userService.deleteUser(userId);
     },
 

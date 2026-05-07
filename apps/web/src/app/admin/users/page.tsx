@@ -6,6 +6,7 @@ import { graphqlClient } from "@/lib/graphql";
 import { gql } from "graphql-request";
 import { Shield, ShieldAlert, User, MoreVertical, Search, CheckCircle2, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
+import { useAuth } from "@/providers/AuthProvider";
 
 // --- GraphQL Operations ---
 const GET_USERS = gql`
@@ -41,6 +42,7 @@ interface UserModel {
 export default function UsersAdminPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
+  const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
   const limit = 20;
@@ -73,7 +75,12 @@ export default function UsersAdminPage() {
   });
 
   const handleDeleteUser = (user: UserModel) => {
-    // Safety check - we shouldn't easily delete ourselves
+    // Safety check - admin cannot delete themselves
+    if (user.id === currentUser?.id) {
+      addToast("You cannot delete your own admin account.", "error");
+      return;
+    }
+
     if (confirm(`Are you absolutely sure you want to permanently delete ${user.name}? This action cannot be undone.`)) {
       deleteMutation.mutate({ userId: user.id });
     }
@@ -175,8 +182,9 @@ export default function UsersAdminPage() {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleDeleteUser(user)}
-                        disabled={deleteMutation.isPending}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition-colors border border-red-200 dark:border-red-500/20 disabled:opacity-50"
+                        disabled={deleteMutation.isPending || user.id === currentUser?.id}
+                        title={user.id === currentUser?.id ? "You cannot delete yourself" : "Delete User"}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition-colors border border-red-200 dark:border-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         Delete User
