@@ -9,7 +9,7 @@ echo ""
 
 # ─── Step 1: Push schema to database ───────────────────────────────────────
 echo "📦 [1/4] Syncing database schema (drizzle-kit push)..."
-npx drizzle-kit push
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx drizzle-kit push
 echo "✅ Schema sync complete."
 echo ""
 
