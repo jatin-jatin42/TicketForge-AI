@@ -13,14 +13,20 @@ npx drizzle-kit push
 echo "✅ Schema sync complete."
 echo ""
 
-# ─── Step 2: Setup partitioned tables ──────────────────────────────────────
+# ─── Step 2: Setup partitioned tables (non-fatal) ──────────────────────────
 echo "🔧 [2/4] Setting up partitioned tables..."
-node -e "require('tsx/cjs'); require('./scripts/fix-partition-table.ts')" 2>/dev/null \
-  || npx tsx scripts/fix-partition-table.ts
-echo "✅ Partitions ready."
+set +e
+npx tsx scripts/fix-partition-table.ts
+PARTITION_EXIT=$?
+set -e
+if [ $PARTITION_EXIT -ne 0 ]; then
+  echo "⚠️  Partition setup exited with code $PARTITION_EXIT — continuing anyway."
+else
+  echo "✅ Partitions ready."
+fi
 echo ""
 
-# ─── Step 3: Seed (only if RUN_SEED=true or first deploy) ──────────────────
+# ─── Step 3: Seed (only if RUN_SEED=true) ──────────────────────────────────
 if [ "$RUN_SEED" = "true" ]; then
   echo "🌱 [3/4] Seeding database (RUN_SEED=true)..."
   npx tsx src/db/seed.ts
