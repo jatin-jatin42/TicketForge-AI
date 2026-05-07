@@ -3,7 +3,16 @@
 export const userTypeDefs = `
   # Extend existing User type with new fields
   extend type User {
+    id: ID!
     name: String!
+    email: String!
+    role: String!
+    createdAt: String!
+  }
+
+  type UsersResponse {
+    users: [User!]!
+    totalCount: Int!
   }
 
   type Wallet {
@@ -48,10 +57,12 @@ export const userTypeDefs = `
     myWallet: Wallet
     myTransactions(limit: Int, offset: Int): [Transaction!]!
     mySettings: UserSettings!
+    users(limit: Int, offset: Int, search: String): UsersResponse!
   }
 
   extend type Mutation {
     updateProfile(input: UpdateProfileInput!): User!
     updateSettings(input: UpdateSettingsInput!): UserSettings!
+    updateUserRole(userId: ID!, role: String!): User!
   }
 `;

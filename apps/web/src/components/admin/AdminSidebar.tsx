@@ -10,12 +10,14 @@ import {
   Tags, 
   Settings, 
   HelpCircle,
-  Ticket
+  Ticket,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ADMIN_NAV_ITEMS = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "User Management", href: "/admin/users", icon: Users },
   { name: "Event Management", href: "/admin/events", icon: CalendarDays },
   { name: "Venue Config", href: "/admin/venues", icon: Map },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },

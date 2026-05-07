@@ -17,7 +17,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({ sections, activeSectio
   if (!sections?.length) return null;
 
   return (
-    <div className="flex gap-3 mb-6 overflow-x-auto pb-2 border-b border-gray-800 no-scrollbar">
+    <div className="flex gap-3 mb-6 overflow-x-auto pb-2 border-b border-gray-800 scrollbar-hide">
       {sections.map((section) => (
         <button
           key={section.id}

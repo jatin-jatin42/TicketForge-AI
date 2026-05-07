@@ -9,6 +9,60 @@ export class UserService {
     return user;
   }
 
+  // Get all users (Admin only)
+  async getUsers(limit: number = 50, offset: number = 0, searchTerm?: string) {
+    let queryConditions = undefined;
+    if (searchTerm) {
+        // ILIKE is Postgres specific
+        queryConditions = sql`${users.fullName} ILIKE ${'%' + searchTerm + '%'} OR ${users.email} ILIKE ${'%' + searchTerm + '%'}`;
+    }
+
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(users).where(queryConditions);
+    
+    const userList = await db
+      .select({
+        id: users.id,
+        name: users.fullName,
+        email: users.email,
+        role: users.role,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(queryConditions)
+      .limit(limit)
+      .offset(offset)
+      .orderBy(sql`${users.createdAt} DESC`);
+
+    return {
+      users: userList.map(u => ({
+        ...u,
+        createdAt: u.createdAt?.toISOString() || new Date().toISOString()
+      })),
+      totalCount: Number(countResult.count)
+    };
+  }
+
+  // Update user role (Admin only)
+  async updateUserRole(userId: string, role: 'ADMIN' | 'USER') {
+    const [updated] = await db
+      .update(users)
+      .set({ role })
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (!updated) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+
+    return {
+      id: updated.id,
+      name: updated.fullName,
+      email: updated.email,
+      role: updated.role,
+      createdAt: updated.createdAt?.toISOString() || new Date().toISOString()
+    };
+  }
+
   // Update user profile
   async updateProfile(userId: string, input: { name?: string; email?: string }) {
     const updateData: any = {};

@@ -11,6 +11,16 @@ const requireAuth = (context: any) => {
   return context.user.id;
 };
 
+const requireAdmin = (context: any) => {
+  const userId = requireAuth(context);
+  if (context.user.role !== 'ADMIN') {
+    throw new GraphQLError('Forbidden: Admin access required.', {
+      extensions: { code: 'FORBIDDEN' },
+    });
+  }
+  return userId;
+};
+
 export const userResolvers = {
   Query: {
     me: async (args: any, context: any) => {
@@ -50,6 +60,12 @@ export const userResolvers = {
       const userId = requireAuth({ user: context.user });
       return await userService.getSettings(userId);
     },
+
+    users: async (args: any, context: any) => {
+      requireAdmin(context);
+      const { limit = 50, offset = 0, search } = args;
+      return await userService.getUsers(limit, offset, search);
+    },
   },
 
   Mutation: {
@@ -68,6 +84,12 @@ export const userResolvers = {
         role: updated.role,
         createdAt: updated.createdAt?.getTime().toString() || '',
       };
+    },
+
+    updateUserRole: async (args: any, context: any) => {
+      requireAdmin(context);
+      const { userId, role } = args;
+      return await userService.updateUserRole(userId, role);
     },
 
     updateSettings: async (args: any, context: any) => {
