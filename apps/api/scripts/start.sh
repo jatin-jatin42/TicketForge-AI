@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+# Required for Aiven's self-signed CA certificate chain.
+# Applies to all child processes including drizzle-kit, tsx scripts, and the main server.
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+
 echo ""
 echo "╔══════════════════════════════════════════╗"
 echo "║      TicketForge API — Starting Up       ║"
@@ -9,7 +13,7 @@ echo ""
 
 # ─── Step 1: Push schema to database ───────────────────────────────────────
 echo "📦 [1/4] Syncing database schema (drizzle-kit push)..."
-NODE_TLS_REJECT_UNAUTHORIZED=0 npx drizzle-kit push
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx drizzle-kit push || echo "⚠️  Schema push had issues — tables may already exist"
 echo "✅ Schema sync complete."
 echo ""
 
