@@ -60,6 +60,6 @@ export const userTypeDefs = `
   extend type Mutation {
     updateProfile(input: UpdateProfileInput!): User!
     updateSettings(input: UpdateSettingsInput!): UserSettings!
-    updateUserRole(userId: ID!, role: String!): User!
+    deleteUser(userId: ID!): Boolean!
   }
 `;

@@ -42,25 +42,36 @@ export class UserService {
     };
   }
 
-  // Update user role (Admin only)
-  async updateUserRole(userId: string, role: 'ADMIN' | 'USER') {
-    const [updated] = await db
-      .update(users)
-      .set({ role })
-      .where(eq(users.id, userId))
-      .returning();
+  // Delete user (Admin only)
+  async deleteUser(userId: string) {
+    // We must handle related records due to foreign keys.
+    // In a production app you might just 'soft delete' or anonymize, but for this feature we will hard delete.
+    
+    // 1. Release any booked/locked seats
+    await db.update(require('../db/schema').eventSeats)
+      .set({ userId: null, status: 'AVAILABLE' })
+      .where(eq(require('../db/schema').eventSeats.userId, userId));
+      
+    // 2. Find all user's orders
+    const userOrders = await db.select({ id: orders.id }).from(orders).where(eq(orders.userId, userId));
+    const orderIds = userOrders.map(o => o.id);
+    
+    // 3. Delete tickets associated with those orders
+    if (orderIds.length > 0) {
+      await db.delete(require('../db/schema').tickets).where(inArray(require('../db/schema').tickets.orderId, orderIds));
+    }
+    
+    // 4. Delete orders
+    await db.delete(orders).where(eq(orders.userId, userId));
 
-    if (!updated) {
+    // 5. Delete the user
+    const [deleted] = await db.delete(users).where(eq(users.id, userId)).returning();
+
+    if (!deleted) {
       throw new Error(`User with ID ${userId} not found`);
     }
 
-    return {
-      id: updated.id,
-      name: updated.fullName,
-      email: updated.email,
-      role: updated.role,
-      createdAt: updated.createdAt?.toISOString() || new Date().toISOString()
-    };
+    return true;
   }
 
   // Update user profile

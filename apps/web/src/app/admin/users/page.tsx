@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { graphqlClient } from "@/lib/graphql";
 import { gql } from "graphql-request";
-import { Shield, ShieldAlert, User, MoreVertical, Search, CheckCircle2 } from "lucide-react";
+import { Shield, ShieldAlert, User, MoreVertical, Search, CheckCircle2, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 
 // --- GraphQL Operations ---
@@ -23,12 +23,9 @@ const GET_USERS = gql`
   }
 `;
 
-const UPDATE_USER_ROLE = gql`
-  mutation UpdateUserRole($userId: ID!, $role: String!) {
-    updateUserRole(userId: $userId, role: $role) {
-      id
-      role
-    }
+const DELETE_USER = gql`
+  mutation DeleteUser($userId: ID!) {
+    deleteUser(userId: $userId)
   }
 `;
 
@@ -63,25 +60,22 @@ export default function UsersAdminPage() {
   const totalCount = data?.users.totalCount || 0;
   const totalPages = Math.ceil(totalCount / limit);
 
-  // Update Role Mutation
-  const updateRoleMutation = useMutation({
-    mutationFn: (vars: { userId: string; role: string }) => graphqlClient.request(UPDATE_USER_ROLE, vars),
+  // Delete User Mutation
+  const deleteMutation = useMutation({
+    mutationFn: (vars: { userId: string }) => graphqlClient.request(DELETE_USER, vars),
     onSuccess: () => {
-      addToast("User role updated successfully.", "success");
+      addToast("User deleted successfully.", "success");
       queryClient.invalidateQueries({ queryKey: ["admin_users"] });
     },
     onError: () => {
-      addToast("Failed to update user role.", "error");
+      addToast("Failed to delete user.", "error");
     },
   });
 
-  const handleRoleToggle = (user: UserModel) => {
-    const newRole = user.role === "ADMIN" ? "USER" : "ADMIN";
-    
-    // Safety check - we shouldn't easily demote ourselves, but the backend allows it. 
-    // In a real app, you might want to prevent an admin from removing their own admin rights.
-    if (confirm(`Are you sure you want to change ${user.name}'s role to ${newRole}?`)) {
-      updateRoleMutation.mutate({ userId: user.id, role: newRole });
+  const handleDeleteUser = (user: UserModel) => {
+    // Safety check - we shouldn't easily delete ourselves
+    if (confirm(`Are you absolutely sure you want to permanently delete ${user.name}? This action cannot be undone.`)) {
+      deleteMutation.mutate({ userId: user.id });
     }
   };
 
@@ -180,11 +174,12 @@ export default function UsersAdminPage() {
                     {/* Actions */}
                     <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => handleRoleToggle(user)}
-                        disabled={updateRoleMutation.isPending}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 disabled:opacity-50"
+                        onClick={() => handleDeleteUser(user)}
+                        disabled={deleteMutation.isPending}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition-colors border border-red-200 dark:border-red-500/20 disabled:opacity-50"
                       >
-                        {user.role === "ADMIN" ? "Demote to User" : "Promote to Admin"}
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete User
                       </button>
                     </td>
                   </tr>

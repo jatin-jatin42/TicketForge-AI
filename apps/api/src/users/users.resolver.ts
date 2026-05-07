@@ -86,10 +86,10 @@ export const userResolvers = {
       };
     },
 
-    updateUserRole: async (args: any, context: any) => {
+    deleteUser: async (args: any, context: any) => {
       requireAdmin(context);
-      const { userId, role } = args;
-      return await userService.updateUserRole(userId, role);
+      const { userId } = args;
+      return await userService.deleteUser(userId);
     },
 
     updateSettings: async (args: any, context: any) => {
