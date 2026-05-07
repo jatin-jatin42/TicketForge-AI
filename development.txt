@@ -1,5 +1,5 @@
 admin@tf.com
-12345678
+admin@tf
 
 user@tf.com
 12345678
@@ -97,3 +97,18 @@ npx tsx src/scripts/simulate-traffic.ts
 pnpm --filter api test apps/api/src/analytics/__tests__/analytics.service.test.ts
 
 ___________________________________________________________________
+
+deployment
+
+generate, migrate or push, partition -> automated
+
+seed manual script -> 
+cd apps/api
+# First, wipe the live database (Caution! Drops all tables)
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx tsx scripts/reset-db.ts
+
+# Second, push the schema back up
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx drizzle-kit push
+
+# Finally, run the massive new seed
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx tsx src/db/seed.ts
