@@ -155,41 +155,28 @@ async function seed() {
     const eventDate = new Date();
     eventDate.setDate(eventDate.getDate() + eData.daysFromNow);
     
+    // Create as DRAFT first, then publish to trigger partition creation
     const [event] = await db.insert(events).values({
       name: eData.name,
       description: `Don't miss out on ${eData.name} live at ${randomVenue.name}!`,
       venueId: randomVenue.id,
       date: eventDate,
-      status: (eData as any).status || "PUBLISHED",
+      status: "DRAFT",
       imageUrl: eData.imageUrl
     }).returning();
     createdEvents.push(event);
 
-    // Populate eventSeats for this event
-    // Find all sections and seats for this venue
-    const venueSections = allSections.filter(s => s.venueId === randomVenue.id);
-    for (const section of venueSections) {
-      const sectionSeats = await db.query.seats.findMany({ where: eq(seats.sectionId, section.id) });
-      
-      const eventSeatsToInsert = sectionSeats.map(seat => ({
-        eventId: event.id,
-        seatId: seat.id,
-        sectionId: section.id,
-        status: "AVAILABLE" as const
-      }));
+    // Call actual publish logic to create Partition tables and insert event_seats
+    const { eventService } = require("../events/events.service");
+    await eventService.publishEvent(event.id);
 
-      // Batch insert event seats
-      for (let i = 0; i < eventSeatsToInsert.length; i += 500) {
-        // Use try-catch to ignore partition errors if any weirdness happens
-        try {
-           await db.insert(eventSeats).values(eventSeatsToInsert.slice(i, i + 500));
-        } catch (e: any) {
-           console.log(`     Warning: Failed to insert some event seats (likely missing partition): ${e.message}`);
-           break; // skip rest for this section if partition is missing
-        }
-      }
+    // If it's a past event, mark it as COMPLETED after publishing
+    if ((eData as any).status === "COMPLETED") {
+       await db.update(events).set({ status: "COMPLETED" }).where(eq(events.id, event.id));
+       event.status = "COMPLETED" as any;
     }
-    console.log(`   - Scheduled: ${event.name} @ ${randomVenue.name}`);
+
+    console.log(`   - Scheduled & Published: ${event.name} @ ${randomVenue.name}`);
   }
 
   // 4. Create Past Activities for normalUser
