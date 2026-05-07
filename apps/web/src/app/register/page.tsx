@@ -28,7 +28,7 @@ export default function RegisterPage() {
       
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || 'Registration failed');
+      if (!res.ok) throw new Error(data.error || data.message || 'Registration failed');
 
       addToast("Account created! Please sign in.", "success");
       router.push('/login');
